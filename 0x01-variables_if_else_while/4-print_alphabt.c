@@ -20,4 +20,5 @@ int main(void)
 			putchar(ch);
 	}
 	putchar(new_line);
+	return (0);
 }
