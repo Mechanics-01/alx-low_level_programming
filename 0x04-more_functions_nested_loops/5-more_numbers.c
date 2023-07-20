@@ -2,7 +2,7 @@
 /**
  * most_numbers - Prints 10 times numbers from 0-14
  *
- * Return: Nothing
+ * Return: Void
  */
 
 void more_numbers(void)
