@@ -5,7 +5,7 @@
  * @b: constant byte
  * @n: number of buffer spaces to be filled
  *
- * Return s
+ * Return: s
  */
 
 char *_memset(char *s, char b, unsigned int n)
