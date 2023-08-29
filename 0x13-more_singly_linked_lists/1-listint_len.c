@@ -2,9 +2,8 @@
 
 /**
  * print_listint_len - returns the number of elements
- * 		       in a linked list listint_t list
+ * in a linked list listint_t list
  * @h: linked list
- *
  * Return: number of nodes as elements
  */
 
