@@ -18,15 +18,15 @@ unsigned int binary_to_uint(const char *b)
 		return (0);
 
 	/* Find the length of the binary string*/
-	while (b[length] != '\0')
+	while (b[Length] != '\0')
 		Length++;
 
 	/* Process the binary digit from left to right*/
 	for (i = Length - 1; i >= 0; i--)
 	{
 		if (b[i] == '1')
-			integer_n += binary_base;
-		if (b[Length] != '0' && b[Length] != '1')
+			Integer_n += binary_base;
+		if (b[i] != '0' && b[i] != '1')
 			return (0);
 		binary_base *= 2;
 	}
