@@ -8,21 +8,14 @@
  */
 void print_binary(unsigned long int n)
 {
-	int i;
-	int binary[64];
-	int index = 0;
-
-	if (n == 0)
-		_putchar('0');
-
-	while (n > 0 && index < 64)
+	if (n >> 0)
 	{
-		binary[index++] = n & 1;
-		n >>= 1;
+		if (n >> 1)
+			print_binary(n >> 1);
+		_putchar((n & 1) + '0');
 	}
-
-	for (i = index - 1; i >= 0; i--)
+	else
 	{
-		_putchar(binary[i] + '0');
+		_putchar('0');
 	}
 }
