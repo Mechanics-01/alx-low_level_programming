@@ -1,7 +1,7 @@
 #include "main.h"
 
 /**
- * read_texfile - reads a text file and prints
+ * read_textfile - reads a text file and prints
  * @filename: filename
  * @letters: numbers of letters printed
  * Return: number of printed letters
@@ -10,7 +10,9 @@
 ssize_t read_textfile(const char *filename, size_t letters)
 {
 	int fd, read_byte, write_byte;
-	char buffer[letters];
+	char *buffer;
+
+	buffer = (char *)malloc(sizeof(char) * letters);
 
 	fd = open(filename, O_RDONLY);
 
