@@ -19,8 +19,10 @@ int create_file(const char *filename, char *text_content)
 	if (fd == -1)
 		return (0);
 
-	for (n_byte = 0; text_content[n_byte]; n_byte++)
+	for (n_byte = 0; text_content[n_byte]; n_byte++)i
+	{
 		;
+	}
 
 	write_byte = write(fd, text_content, n_byte);
 
@@ -30,5 +32,6 @@ int create_file(const char *filename, char *text_content)
 	if (filename == NULL)
 		return (-1);
 	close(fd);
+
 	return (1);
 }
