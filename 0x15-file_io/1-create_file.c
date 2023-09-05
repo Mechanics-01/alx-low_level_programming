@@ -9,7 +9,7 @@
 
 int create_file(const char *filename, char *text_content)
 {
-	int fd, write_byte;
+	int fd, write_byte, n_byte;
 
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0600);
 
@@ -18,7 +18,11 @@ int create_file(const char *filename, char *text_content)
 
 	if (fd == -1)
 		return (0);
-	write_byte = write(fd, text_content, sizeof(text_content));
+
+	for (n_byte = 0; text_content[n_byte]; n_byte++)
+		;
+
+	write_byte = write(fd, text_content, n_byte);
 
 	if (write_byte == -1)
 		return (0);
