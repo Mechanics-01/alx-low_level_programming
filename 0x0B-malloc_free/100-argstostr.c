@@ -1,5 +1,5 @@
 #include "main.h"
-
+#include <stdlib.h>
 /**
  * argstostr - concatenates all arguments of the program.
  * @ac: argument count.
@@ -40,3 +40,11 @@ char *argstostr(int ac, char **av)
 			arg[k] = av[i][j];
 			j++;
 			k++;
+		}
+		arg[k] = '\n';
+		k++;
+		i++;
+	}
+	arg[k] = '\0';
+	return (arg);
+}
