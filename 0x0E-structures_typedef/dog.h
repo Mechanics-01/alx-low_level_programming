@@ -2,7 +2,7 @@
 #define DOG_H
 
 #include <stdio.h>
-
+#define NIL "(nil)"
 /**
  * struct dog - contains dog info
  * @name: name of dog
