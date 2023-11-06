@@ -77,6 +77,26 @@ void deleteatend(void)
 		new = new->next;
 	new->next = NULL;
 }
+void deletenode(int key)
+{
+	node *temp;
+	node *prev;
+	temp = head;
+	if (temp != NULL && temp->data == key)
+	{
+		head = temp->next;
+		return;
+	}
+	while (temp != NULL && temp->data != key)
+	{
+		prev = temp;
+		temp = temp->next;
+	}
+	if (temp == NULL)
+		return;
+	prev->next = temp->next;
+}
+
 
 void main(void)
 {
@@ -91,7 +111,6 @@ void main(void)
 	printf("Linked List: ");
 
 	printList();
-	deleteatbegin();
-	deleteatend();
+	deletenode(90);
 	printList();
 }
