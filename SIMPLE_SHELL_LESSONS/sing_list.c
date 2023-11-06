@@ -64,6 +64,20 @@ void insertafternode(int data, int key)
 	}
 }
 
+void deleteatbegin(void)
+{
+	head = head->next;
+}
+
+void deleteatend(void)
+{
+	node *new;
+	new = head;
+	while (new->next->next != NULL)
+		new = new->next;
+	new->next = NULL;
+}
+
 void main(void)
 {
 	int k = 0;
@@ -76,5 +90,8 @@ void main(void)
 	insertafternode(99, 55);
 	printf("Linked List: ");
 
+	printList();
+	deleteatbegin();
+	deleteatend();
 	printList();
 }
