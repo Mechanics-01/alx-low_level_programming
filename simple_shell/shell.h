@@ -9,6 +9,14 @@
 #include <sys/wait.h>
 #include <stdbool.h>
 
+typedef struct path_node
+{
+	char *dir;
+	struct path_node *next;
+}pathnode;
+
 void exe_comd(char *input, char *av[]);
+char *location(char *path, char *arg);
+char *get_loc(char *arg);
 
 #endif/*SHELL_H*/
