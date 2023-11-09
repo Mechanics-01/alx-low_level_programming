@@ -28,9 +28,12 @@ int main(int ac, char *av[], char *envp[])
 		/*Ensures process is stopped when exit or quit is encountered*/
 		if (strcmp(line_buff, "quit") == 0 || strcmp(line_buff, "exit") == 0)
     	{
-            free (line_buff);
             break;
     	}
+
+		else if (strcmp(line_buff, "env") == 0)
+			env(envp);
+
 		exe_comd(line_buff, av);
 	}
 	free(line_buff);
@@ -137,4 +140,17 @@ void exe_comd(char *input, char *av[])
 	}
 	else
 		perror(av[0]);
+}
+
+int env(char *envp[])
+{
+	unsigned int i;
+	i = 0;
+
+	while (envp[i] != NULL)
+	{
+		printf("%s\n", envp[i]);
+		i++;
+	}
+	return (0);
 }
