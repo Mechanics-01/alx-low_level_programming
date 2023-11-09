@@ -9,14 +9,12 @@
 #include <sys/wait.h>
 #include <stdbool.h>
 
-typedef struct path_node
-{
-	char *dir;
-	struct path_node *next;
-}pathnode;
+#define BUFFER 1000
 
 void exe_comd(char *input, char *av[]);
 char *location(char *path, char *arg);
 char *get_loc(char *arg);
+int env(char *envp[]);
+size_t _getline(char **line_buff);
 
 #endif/*SHELL_H*/

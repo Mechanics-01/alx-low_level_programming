@@ -10,9 +10,20 @@ int main(int ac, char *av[], char *envp[])
 	while (true)
 	{
 		if(isatty(STDIN_FILENO))
+		{
 			printf("%s", prompt);
+			fflush(stdout);
+		}
+			
+		line_buff = malloc(BUFFER);
+		
+        if (line_buff == NULL)
+		{
+			perror("malloc");
+			exit(1);
+		}
 		/*Gets the number of byte if input string*/
-		buff_out_len = getline(&line_buff, &buff_size, stdin);
+		buff_out_len = _getline(&line_buff);
 		/*Checks if the getline function fails*/
 		if (buff_out_len == -1)
 		{
@@ -23,8 +34,7 @@ int main(int ac, char *av[], char *envp[])
 			free(line_buff);
 			exit(1);
 		}
-		/*Checks for newline character and removes it*/
-		line_buff[buff_out_len - 1] = '\0';
+		printf("%s\n", line_buff);
 		/*Ensures process is stopped when exit or quit is encountered*/
 		if (strcmp(line_buff, "quit") == 0 || strcmp(line_buff, "exit") == 0)
     	{
@@ -153,4 +163,40 @@ int env(char *envp[])
 		i++;
 	}
 	return (0);
+}
+
+size_t _getline(char **line_buff)
+{
+	static size_t buff_size = 0;
+	static char buff[BUFFER];
+	size_t line_len = 0;
+	size_t i;
+
+	if (buff_size == 0 || buff[buff_size - 1] == '\0')
+	{
+		buff_size = read(STDIN_FILENO, buff, BUFFER);
+		if (buff_size <= 0)
+			return (buff_size);
+	}
+	while (buff_size > 0 && buff[line_len] != '\n')
+		line_len++;
+
+	*line_buff = malloc(line_len + 1);
+	if (*line_buff == NULL)
+    {
+        perror("malloc");
+        exit(1);
+    }
+
+	for (i = 0; i < line_len; i++)
+		(*line_buff)[i] = buff[i];
+	(*line_buff)[line_len] = '\0';
+
+	buff_size -= (line_len + 1);
+    for (i = 0; i < buff_size; i++)
+    {
+        buff[i] = buff[line_len + 1 + i];
+    }
+
+	return (line_len);
 }
