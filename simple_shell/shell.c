@@ -35,9 +35,7 @@ int main(int ac, char *av[], char *envp[])
 			exit(1);
 		}
 		/*Ensures process is stopped when exit or quit is encountered*/
-		if (strcmp(line_buff, "quit") == 0 || strcmp(line_buff, "exit") == 0)
-            break;
-		else if (strcmp(line_buff, "env") == 0)
+		if (strcmp(line_buff, "env") == 0)
 			env(envp);
 		exe_comd(line_buff, av);
 	}
@@ -104,7 +102,7 @@ char *get_loc(char *arg)
 void exe_comd(char *input, char *av[])
 {
 	pid_t c_pid;
-	int status, i = 0;
+	int status, i = 0, exit_s;
 	char *argv[100];
 	char *tok_str;
 	char *path;
@@ -116,6 +114,13 @@ void exe_comd(char *input, char *av[])
 		tok_str = my_strtoken(NULL, " ");
 	}
 	argv[i] = NULL;
+	if (strcmp(argv[0], "exit") == 0 && argv[1] != NULL)
+    {
+        exit_s = atoi(argv[1]);
+        free(input);
+        free(tok_str);
+        exit(exit_s);
+    }
 
 	path = get_loc(argv[0]);
 
@@ -201,6 +206,9 @@ char *my_strtoken(char *string, const char *target)
 {
 	static char *n_token;
 	size_t i;
+	size_t target_len;
+	char *token;
+	char *targ_pos;
 
 	if (string != NULL)
 		n_token = string;
@@ -208,9 +216,9 @@ char *my_strtoken(char *string, const char *target)
 	if (n_token == NULL || *n_token == '\0')
 		return (NULL);
 
-	size_t target_len = strlen(target);
-	char *token = n_token;
-	char *targ_pos = NULL;
+	target_len = strlen(target);
+	token = n_token;
+	targ_pos = NULL;
 
 	while (*n_token != '\0')
 	{
