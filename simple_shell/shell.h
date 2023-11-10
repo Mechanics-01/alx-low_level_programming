@@ -15,6 +15,7 @@ void exe_comd(char *input, char *av[]);
 char *location(char *path, char *arg);
 char *get_loc(char *arg);
 int env(char *envp[]);
-size_t _getline(char **line_buff);
+ssize_t _getline(char **line_buff);
+char *my_strtoken(char *string, const char *target);
 
 #endif/*SHELL_H*/

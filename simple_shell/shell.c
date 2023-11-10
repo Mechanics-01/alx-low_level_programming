@@ -14,9 +14,7 @@ int main(int ac, char *av[], char *envp[])
 			printf("%s", prompt);
 			fflush(stdout);
 		}
-			
 		line_buff = malloc(BUFFER);
-		
         if (line_buff == NULL)
 		{
 			perror("malloc");
@@ -25,28 +23,24 @@ int main(int ac, char *av[], char *envp[])
 		/*Gets the number of byte if input string*/
 		buff_out_len = _getline(&line_buff);
 		/*Checks if the getline function fails*/
+		if (buff_out_len == EOF)
+		{
+    		free(line_buff);
+    		break;
+		}
 		if (buff_out_len == -1)
 		{
-			if (buff_out_len == EOF)
-				printf("\n");
-			else
-				perror("getline");
+			perror("getline");
 			free(line_buff);
 			exit(1);
 		}
-		printf("%s\n", line_buff);
 		/*Ensures process is stopped when exit or quit is encountered*/
 		if (strcmp(line_buff, "quit") == 0 || strcmp(line_buff, "exit") == 0)
-    	{
             break;
-    	}
-
 		else if (strcmp(line_buff, "env") == 0)
 			env(envp);
-
 		exe_comd(line_buff, av);
 	}
-	free(line_buff);
 	return (0);
 }
 
@@ -59,7 +53,7 @@ char *location(char *path, char *arg)
 
 	path_cpy = strdup(path);
 
-	path_token = strtok(path_cpy, delim);
+	path_token = my_strtoken(path_cpy, delim);
 
 	filepath = malloc(strlen(arg) + strlen(path_token) + 2);
 
@@ -75,7 +69,7 @@ char *location(char *path, char *arg)
 			free(path_cpy);
 			return(filepath);
 		}
-		path_token = strtok(NULL, delim);
+		path_token = my_strtoken(NULL, delim);
 	}
 	free(filepath);
 	free(path_cpy);
@@ -115,11 +109,11 @@ void exe_comd(char *input, char *av[])
 	char *tok_str;
 	char *path;
 
-	tok_str = strtok(input, " ");
+	tok_str = my_strtoken(input, " ");
 	while (tok_str != NULL)
 	{
 		argv[i++] = tok_str;
-		tok_str = strtok(NULL, " ");
+		tok_str = my_strtoken(NULL, " ");
 	}
 	argv[i] = NULL;
 
@@ -140,13 +134,15 @@ void exe_comd(char *input, char *av[])
 			if (execve(path, argv, NULL) == -1)
 			{
 				perror(av[0]);
-				free(input);
 				exit(1);
 			}
-			free(path);
 		}
 		else
+		{
 			wait(&status);
+			free(path);
+			free(input);
+		}
 	}
 	else
 		perror(av[0]);
@@ -165,18 +161,20 @@ int env(char *envp[])
 	return (0);
 }
 
-size_t _getline(char **line_buff)
+ssize_t _getline(char **line_buff)
 {
-	static size_t buff_size = 0;
+	static ssize_t buff_size = 0;
 	static char buff[BUFFER];
-	size_t line_len = 0;
+	ssize_t line_len = 0;
 	size_t i;
 
-	if (buff_size == 0 || buff[buff_size - 1] == '\0')
+	if (buff_size <= 0 || buff[buff_size - 1] == '\0')
 	{
 		buff_size = read(STDIN_FILENO, buff, BUFFER);
-		if (buff_size <= 0)
+		if (buff_size < 0)
 			return (buff_size);
+		else if (buff_size == 0)
+			return (EOF);
 	}
 	while (buff_size > 0 && buff[line_len] != '\n')
 		line_len++;
@@ -187,7 +185,6 @@ size_t _getline(char **line_buff)
         perror("malloc");
         exit(1);
     }
-
 	for (i = 0; i < line_len; i++)
 		(*line_buff)[i] = buff[i];
 	(*line_buff)[line_len] = '\0';
@@ -195,8 +192,44 @@ size_t _getline(char **line_buff)
 	buff_size -= (line_len + 1);
     for (i = 0; i < buff_size; i++)
     {
-        buff[i] = buff[line_len + 1 + i];
+        buff[i] = buff[line_len + i];
     }
-
 	return (line_len);
+}
+
+char *my_strtoken(char *string, const char *target)
+{
+	static char *n_token;
+	size_t i;
+
+	if (string != NULL)
+		n_token = string;
+
+	if (n_token == NULL || *n_token == '\0')
+		return (NULL);
+
+	size_t target_len = strlen(target);
+	char *token = n_token;
+	char *targ_pos = NULL;
+
+	while (*n_token != '\0')
+	{
+		for (i = 0; i < target_len; i++)
+		{
+			if (*n_token == target[i])
+			{
+				targ_pos = n_token;
+				break;
+			}
+		}
+		if (targ_pos != NULL)
+		{
+			*targ_pos = '\0';
+			n_token = targ_pos + 1;
+			return (token);
+		}
+		n_token++;
+	}
+	n_token	= NULL;
+	return token;
 }
