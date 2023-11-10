@@ -35,8 +35,11 @@ int main(int ac, char *av[], char *envp[])
 			exit(1);
 		}
 		/*Ensures process is stopped when exit or quit is encountered*/
-		if (strcmp(line_buff, "env") == 0)
+		if (strcmp(line_buff, "exit") == 0)
+			break;
+		else if (strcmp(line_buff, "env") == 0)
 			env(envp);
+
 		exe_comd(line_buff, av);
 	}
 	return (0);
@@ -88,7 +91,7 @@ char *get_loc(char *arg)
 			return NULL;
 		}
     }
-	path = getenv("PATH");
+	path = _getenv("PATH");
 
 	if (path)
 	{
@@ -99,7 +102,7 @@ char *get_loc(char *arg)
 
 }
 
-void exe_comd(char *input, char *av[])
+int exe_comd(char *input, char *av[])
 {
 	pid_t c_pid;
 	int status, i = 0, exit_s;
@@ -114,15 +117,31 @@ void exe_comd(char *input, char *av[])
 		tok_str = my_strtoken(NULL, " ");
 	}
 	argv[i] = NULL;
+	
 	if (strcmp(argv[0], "exit") == 0 && argv[1] != NULL)
     {
         exit_s = atoi(argv[1]);
-        free(input);
-        free(tok_str);
         exit(exit_s);
     }
 
+	else if (exec_env(argv) == 0)
+		return (0);
+	
+	else if (strcmp(argv[0], "cd") == 0)
+    {
+        // If "cd" is the only command, change to the home directory
+        if (argv[1] == NULL)
+            change_d(NULL, av);
+        // If "cd -" is entered, change to the previous directory
+        else if (strcmp(argv[1], "-") == 0)
+            change_d("OLDPWD", av);
+        // Otherwise, change to the specified directory
+        else
+            change_d(argv[1], av);
+    }
+	
 	path = get_loc(argv[0]);
+	
 
 	if (path != NULL)
 	{
@@ -240,4 +259,182 @@ char *my_strtoken(char *string, const char *target)
 	}
 	n_token	= NULL;
 	return token;
+}
+
+int exec_env(char *argv[])
+{
+	char *b_msg;
+	if (strcmp(argv[0], "setenv") == 0)
+	{
+        if (argv[1] != NULL && argv[2] != NULL)
+		{
+            if (_setenv(argv[1], argv[2], 1) == -1)
+			{
+                b_msg = "setenv: Error establishing environment variable\n";
+                write(2, b_msg, strlen(b_msg));
+            }
+			return (0);
+        }
+		else 
+		{
+            b_msg = "Usage: setenv VARIABLE VALUE\n";
+            write(2, b_msg, strlen(b_msg));
+			return (0);
+        }
+    }
+	else if (strcmp(argv[0], "unsetenv") == 0)
+	{
+        if (argv[1] != NULL)
+		{
+            if (_unsetenv(argv[1]) == -1)
+			{
+                b_msg = "unsetenv: Error establisng environment variable\n";
+                write(2, b_msg, strlen(b_msg));
+            }
+			return (0);
+        }
+		else
+		{
+            b_msg = "unsetenv: Usage: unsetenv VARIABLE\n";
+            write(2, b_msg, strlen(b_msg));
+			return (0);
+        }
+	}
+}
+
+char *_getenv(const char *name)
+{
+	int i;
+	char *env;
+
+	if (name == NULL || environ == NULL)
+		return NULL;
+
+	for (i = 0; environ[i] != NULL; i++)
+	{
+		env = environ[i];
+		if (strncmp(env, name, strlen(name)) == 0 && env[strlen(name)] == '=')
+			return (env + strlen(name) + 1);
+	}
+	return (NULL);
+}
+
+void change_d(char *d, char *av[])
+{
+	char *directory;
+	char cdd[BUFFER];	
+
+	if (d == NULL)
+		directory = _getenv("HOME");
+	else if (strcmp (d, "-") == 0)
+		directory = _getenv("OLDPWD");
+	else
+		directory = d;
+	
+	if (chdir(directory) != 0)
+	{
+		perror(av[0]);
+		exit(1);
+	}
+	else
+	{
+		if (getcwd(cdd, sizeof(cdd)) == NULL)
+        {
+            perror("getcwd");
+			exit(1);
+        }
+		setenv("PWD", cdd, 1);
+		setenv("OLDPWD", _getenv("PWD"), 1);
+	}
+
+}
+int _setenv(const char *name, const char *value, int overwrite)
+{
+	size_t name_len, value_len, env_len, i;
+	char *new_env;
+	int env_index;
+
+	if (name == NULL || name[0] == '\0')
+		return (-1);
+
+	name_len = strlen(name);
+	value_len = (value != NULL) ? strlen(value) : 0;
+	env_len = name_len + value_len + 2;
+
+	new_env = malloc(env_len);
+	if (new_env == NULL)
+		return (-1);
+
+	for (i = 0; i < name_len; i++)
+		new_env[i] = name[i];
+
+	new_env[name_len] = '=';
+	for (i = 0; i < value_len; i++)
+		new_env[name_len + 1 + i] = value[i];
+
+	new_env[env_len - 1] = '\0';
+	
+	env_index = 0;
+	for (i = 0; environ[i] != NULL; i++)
+	{
+		if (strncmp(environ[i], name, name_len) == 0)
+		{
+			env_index = i;
+			break;
+		}
+	}
+
+	if (env_index != 0)
+	{
+		if (overwrite)
+		{
+			free(environ[env_index]);
+			environ[env_index] = new_env;
+		}
+		else
+			free(new_env);
+	}
+	else
+	{
+		for (i = 0; ; i++)
+		{
+			if (environ[i] == NULL)
+			{
+				environ[i] = new_env;
+				environ[i + 1] = NULL;
+				break;
+			}
+		}
+	}
+	return (0);
+}
+int _unsetenv(const char *name)
+{
+	int env_index;
+	size_t name_len;
+	int i;
+
+	if (name == NULL || name[0] == '\0')
+		return (-1);
+	
+	env_index = 0;
+	name_len = strlen(name);
+
+	for (i = 0; environ[i] != NULL; i++)
+	{
+		if (strncmp(environ[i], name, name_len) == 0)
+		{
+			env_index = i;
+			break;
+		}
+	}
+	if (env_index != 0)
+	{
+		free(environ[env_index]);
+		
+		for (i = env_index; environ[i] != NULL; i++)
+			environ[i] = environ[i + 1];
+		return (0);
+	}
+	return (-1);
 }
