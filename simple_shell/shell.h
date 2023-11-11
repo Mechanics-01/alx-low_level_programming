@@ -19,9 +19,11 @@ int env(char *envp[]);
 ssize_t _getline(char **line_buff);
 char *my_strtoken(char *string, const char *target);
 int exec_env(char *argv[]);
-void change_d(char *d, char *av[]);
+void change_d(char *d);
 char *_getenv(const char *name);
 int _unsetenv(const char *name);
 int _setenv(const char *name, const char *value, int overwrite);
+void free_commands(char **commands);
+char **parse_commands(char *input);
 
 #endif/*SHELL_H*/

@@ -54,7 +54,7 @@ char *location(char *path, char *arg)
 
 	path_cpy = strdup(path);
 
-	path_token = my_strtoken(path_cpy, delim);
+	path_token = strtok(path_cpy, delim);
 
 	filepath = malloc(strlen(arg) + strlen(path_token) + 2);
 
@@ -70,7 +70,7 @@ char *location(char *path, char *arg)
 			free(path_cpy);
 			return(filepath);
 		}
-		path_token = my_strtoken(NULL, delim);
+		path_token = strtok(NULL, delim);
 	}
 	free(filepath);
 	free(path_cpy);
@@ -102,74 +102,64 @@ char *get_loc(char *arg)
 
 }
 
-int exe_comd(char *input, char *av[])
-{
-	pid_t c_pid;
-	int status, i = 0, exit_s;
-	char *argv[100];
-	char *tok_str;
-	char *path;
+int exe_comd(char *input, char *av[]) {
+    pid_t c_pid;
+    int status, i = 0;
+    char **commands = parse_commands(input);
 
-	tok_str = my_strtoken(input, " ");
-	while (tok_str != NULL)
-	{
-		argv[i++] = tok_str;
-		tok_str = my_strtoken(NULL, " ");
-	}
-	argv[i] = NULL;
-	
-	if (strcmp(argv[0], "exit") == 0 && argv[1] != NULL)
-    {
-        exit_s = atoi(argv[1]);
-        exit(exit_s);
+    while (commands[i] != NULL) {
+        char *command = commands[i];
+        char *argv[100];
+        int j = 0;
+
+        char *tok_str = strtok(command, " ");
+        while (tok_str != NULL) {
+            argv[j++] = tok_str;
+            tok_str = strtok(NULL, " ");
+        }
+        argv[j] = NULL;
+
+        if (strcmp(argv[0], "exit") == 0 && argv[1] != NULL) {
+            int exit_s = atoi(argv[1]);
+            exit(exit_s);
+        } else if (exec_env(argv) == 0) {
+            i++;
+            continue;
+        } else if (strcmp(argv[0], "cd") == 0) {
+            change_d(argv[1]);
+            i++;
+            continue;
+        }
+
+        char *path = get_loc(argv[0]);
+
+        if (path != NULL) {
+            c_pid = fork();
+            if (c_pid == -1) {
+                perror("fork");
+                free(input);
+                exit(1);
+            }
+
+            if (c_pid == 0) {
+                // Child process
+                if (execve(path, argv, NULL) == -1) {
+                    perror(av[0]);
+                    exit(1);
+                }
+            } else {
+                // Parent process
+                wait(&status);
+                free(path);
+            }
+        } else {
+            perror(av[0]);
+        }
+
+        i++;
     }
-
-	else if (exec_env(argv) == 0)
-		return (0);
-	
-	else if (strcmp(argv[0], "cd") == 0)
-    {
-        // If "cd" is the only command, change to the home directory
-        if (argv[1] == NULL)
-            change_d(NULL, av);
-        // If "cd -" is entered, change to the previous directory
-        else if (strcmp(argv[1], "-") == 0)
-            change_d("OLDPWD", av);
-        // Otherwise, change to the specified directory
-        else
-            change_d(argv[1], av);
-    }
-	
-	path = get_loc(argv[0]);
-	
-
-	if (path != NULL)
-	{
-		c_pid = fork();
-		if (c_pid == -1)
-		{
-			perror("fork");
-			free(input);
-			exit(1);
-		}
-		/*If fork is successful tokenise the string input*/
-		if (c_pid == 0)
-		{
-			if (execve(path, argv, NULL) == -1)
-			{
-				perror(av[0]);
-				exit(1);
-			}
-		}
-		else
-		{
-			wait(&status);
-			free(path);
-			free(input);
-		}
-	}
-	else
-		perror(av[0]);
+	free(commands);
+	return (0);
 }
 
 int env(char *envp[])
@@ -319,21 +309,25 @@ char *_getenv(const char *name)
 	return (NULL);
 }
 
-void change_d(char *d, char *av[])
+void change_d(char *d)
 {
 	char *directory;
 	char cdd[BUFFER];	
 
 	if (d == NULL)
+	{
 		directory = _getenv("HOME");
+	}
 	else if (strcmp (d, "-") == 0)
+	{
 		directory = _getenv("OLDPWD");
+	}
 	else
 		directory = d;
 	
 	if (chdir(directory) != 0)
 	{
-		perror(av[0]);
+		perror("chdir");
 		exit(1);
 	}
 	else
@@ -343,8 +337,8 @@ void change_d(char *d, char *av[])
             perror("getcwd");
 			exit(1);
         }
-		setenv("PWD", cdd, 1);
-		setenv("OLDPWD", _getenv("PWD"), 1);
+		_setenv("PWD", cdd, 1);
+		_setenv("OLDPWD", _getenv("OLDPWD"), 1);
 	}
 
 }
@@ -388,7 +382,6 @@ int _setenv(const char *name, const char *value, int overwrite)
 	{
 		if (overwrite)
 		{
-			free(environ[env_index]);
 			environ[env_index] = new_env;
 		}
 		else
@@ -429,12 +422,43 @@ int _unsetenv(const char *name)
 		}
 	}
 	if (env_index != 0)
-	{
-		free(environ[env_index]);
-		
+	{	
 		for (i = env_index; environ[i] != NULL; i++)
 			environ[i] = environ[i + 1];
 		return (0);
 	}
 	return (-1);
 }
+
+char **parse_commands(char *input) {
+    int i = 0;
+    char *tok_str;
+    char **commands = malloc(sizeof(char *) * 100);
+
+    if (commands == NULL) {
+        perror("malloc");
+        exit(1);
+    }
+
+    tok_str = strtok(input, ";");
+    while (tok_str != NULL) {
+        commands[i++] = strdup(tok_str);
+        tok_str = strtok(NULL, ";");
+    }
+
+    commands[i] = NULL;
+
+    return commands;
+}
+
+void free_commands(char **commands) {
+    int i = 0;
+    
+    while (commands[i] != NULL) {
+        free(commands[i]);
+        i++;
+    }
+
+    free(commands);
+}
+
